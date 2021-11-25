@@ -4,6 +4,7 @@ import os
 from typing import List, Tuple, Dict
 import numpy as np
 from scipy.spatial.transform import Rotation
+from imageio import imread
 import pybullet
 import farms_pylog as pylog
 from farms_sdf.sdf import (
@@ -86,10 +87,21 @@ def pybullet_options_from_shape(shape, path='', force_concave=False, meters=1):
         if force_concave:
             options['flags'] = pybullet.GEOM_FORCE_CONCAVE_TRIMESH
     elif isinstance(shape.geometry, Heightmap):
-        options = {}
         options['shapeType'] = pybullet.GEOM_HEIGHTFIELD
-        options['fileName'] = os.path.join(path, shape.geometry.uri)
-        options['meshScale'] = np.array(shape.geometry.size)*meters
+        path = os.path.join(path, shape.geometry.uri)
+        assert os.path.isfile(path), path
+        # options['fileName'] = path
+        img = imread(path)  # Read PNG image from path and store array
+        img = img[:, :, 0] if img.ndim == 3 else img[:, :]  # RGB vs Grey
+        img = (img - np.min(img))/(np.max(img)-np.min(img))  # Normalize height
+        img = np.flip(img, axis=0)  # Cartesian coordinates
+        width = shape.geometry.size[0]/img.shape[0]*meters
+        length = shape.geometry.size[1]/img.shape[1]*meters
+        options['heightfieldData'] = img.flatten()
+        options['numHeightfieldRows'] = img.shape[0]
+        options['numHeightfieldColumns'] = img.shape[1]
+        options['meshScale'] = [width, length, shape.geometry.size[2]*meters]
+        options['heightfieldTextureScaling'] = img.shape[0]/width
     else:
         raise Exception('Unknown type {}'.format(type(shape.geometry)))
     return options
@@ -192,7 +204,15 @@ def load_sdf(
     for link in sdf.links:
 
         # Number of visuals/collisions in link
-        n_links = max(1, len(link.visuals), len(link.collisions))
+        n_links = max(
+            1,
+            len(link.collisions),
+            len([
+                visual
+                for visual in link.visuals
+                if not isinstance(visual.geometry, Heightmap)
+            ]),
+        )
 
         # Joint information
         joint = find_joint(sdf, link)
@@ -207,7 +227,11 @@ def load_sdf(
                         path=folder,
                         meters=units.meters*global_scaling,
                     )
-                ) if i < len(link.visuals) else -1
+                )
+                if (
+                        i < len(link.visuals)
+                        and not isinstance(link.visuals[i].geometry, Heightmap)
+                ) else -1
             )
             # Collisions
             collisions.append(
