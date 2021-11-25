@@ -2,10 +2,13 @@
 
 import os
 from typing import List, Tuple, Dict
-import numpy as np
-from scipy.spatial.transform import Rotation
-from imageio import imread
+
 import pybullet
+import numpy as np
+from imageio import imread
+from scipy.spatial.transform import Rotation
+from scipy.ndimage.filters import gaussian_filter
+
 import farms_pylog as pylog
 from farms_sdf.sdf import (
     ModelSDF,
@@ -47,9 +50,13 @@ def rot_diff(rot0, rot1):
     return pybullet.getDifferenceQuaternion(rot0, rot1)
 
 
-def pybullet_options_from_shape(shape, path='', force_concave=False, meters=1):
+def pybullet_options_from_shape(shape, **kwargs):
     """Pybullet shape"""
     options = {}
+    path = kwargs.pop('path', '')
+    meters = kwargs.pop('meters', 1)
+    sigma = kwargs.pop('sigma', [3, 3])
+    force_concave = kwargs.pop('force_concave', False)
     collision = isinstance(shape, Collision)
     if collision:
         options['collisionFramePosition'] = np.array(shape.pose[:3])*meters
@@ -91,13 +98,15 @@ def pybullet_options_from_shape(shape, path='', force_concave=False, meters=1):
         path = os.path.join(path, shape.geometry.uri)
         assert os.path.isfile(path), path
         # options['fileName'] = path
-        img = imread(path)  # Read PNG image from path and store array
+        img = imread(path).astype(np.double)  # Read PNG image and store array
         img = img[:, :, 0] if img.ndim == 3 else img[:, :]  # RGB vs Grey
+        if sigma is not None:
+            img = gaussian_filter(input=img, sigma=sigma, mode='reflect')
         img = (img - np.min(img))/(np.max(img)-np.min(img))  # Normalize height
-        img = np.flip(img, axis=0)  # Cartesian coordinates
+        img = np.flip(img, axis=0).T  # Cartesian coordinates
         width = shape.geometry.size[0]/img.shape[0]*meters
         length = shape.geometry.size[1]/img.shape[1]*meters
-        options['heightfieldData'] = img.flatten()
+        options['heightfieldData'] = img.flatten(order='F')
         options['numHeightfieldRows'] = img.shape[0]
         options['numHeightfieldColumns'] = img.shape[1]
         options['meshScale'] = [width, length, shape.geometry.size[2]*meters]
@@ -223,7 +232,7 @@ def load_sdf(
             visuals.append(
                 pybullet.createVisualShape(
                     **pybullet_options_from_shape(
-                        link.visuals[i],
+                        shape=link.visuals[i],
                         path=folder,
                         meters=units.meters*global_scaling,
                     )
@@ -237,7 +246,7 @@ def load_sdf(
             collisions.append(
                 pybullet.createCollisionShape(
                     **pybullet_options_from_shape(
-                        link.collisions[i],
+                        shape=link.collisions[i],
                         path=folder,
                         force_concave=force_concave,
                         meters=units.meters*global_scaling,
