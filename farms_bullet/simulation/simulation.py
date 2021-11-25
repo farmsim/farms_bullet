@@ -263,18 +263,19 @@ class AnimatSimulation(Simulation):
         #     )
         if not self.options.headless and self.interface is not None:
             play = self.interface.user_params.play().value
-            if not iteration % int(0.1/self.options.timestep):
-                self.interface.user_params.update()
-                self.interface.camera.update()
-            if self.interface.user_params.zoom().changed or not iteration:
-                self.interface.camera.set_zoom(
-                    self.interface.user_params.zoom().value
-                )
-            if not play:
+            if play:
+                if not iteration % int(0.1/self.options.timestep):
+                    self.interface.user_params.update()
+                    self.interface.camera.update()
+                if self.interface.user_params.zoom().changed or not iteration:
+                    self.interface.camera.set_zoom(
+                        self.interface.user_params.zoom().value
+                    )
+                if self.options.record:
+                    self.interface.video.record(iteration)
+            else:
                 time.sleep(0.1)
                 self.interface.user_params.update()
-            elif self.options.record:
-                self.interface.video.record(iteration)
         return play
 
     def post_step(self, iteration: int):
