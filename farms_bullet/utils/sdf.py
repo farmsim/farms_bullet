@@ -582,6 +582,7 @@ def load_sdf_pybullet(sdf_path, index=0, morphology_links=None, **kwargs):
             linkIndex=links[link_name],
             localInertiaDiagonal=list(np.array(inertias)*inertia_unit),
         )
+    links[ModelSDF.read(sdf_path)[0].get_base_link().name] = -1  # Base link
     if morphology_links is not None:
         for link in morphology_links:
             if link not in links:
