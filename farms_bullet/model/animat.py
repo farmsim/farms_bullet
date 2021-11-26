@@ -122,13 +122,12 @@ class Animat(SimulationModel):
     def spawn_sdf(self, verbose=True, original=False):
         """Spawn sdf"""
         if verbose:
-            pylog.debug('Spawning {} using {}'.format(
+            pylog.debug(
+                'Spawning %s using %s',
                 self.sdf,
                 'Pybullet' if original else 'FARMS',
-            ))
-        assert os.path.isfile(self.sdf), '{} is not a file'.format(
-            self.sdf
-        )
+            )
+        assert os.path.isfile(self.sdf), '{} is not a file'.format(self.sdf)
         if original:
             self._identity, self.links_map, self.joints_map = load_sdf_pybullet(
                 sdf_path=self.sdf,
@@ -146,7 +145,8 @@ class Animat(SimulationModel):
                 units=self.units,
             )
         if verbose:
-            pylog.debug('{}\n\n{}\n{}'.format(
+            pylog.debug(
+                '%s\n\n%s\n%s',
                 'Spawned model (Identity={})'.format(self._identity),
                 'Model properties from pybullet (scaled units):',
                 '\n'.join([
@@ -172,7 +172,7 @@ class Animat(SimulationModel):
                     )
                     for link_name, link in self.links_map.items()
                 ]),
-            ))
+            )
         initial_pose(
             identity=self._identity,
             joints=self.joints_identities(),
@@ -252,7 +252,7 @@ class Animat(SimulationModel):
                     index = links.names.index(link.name)
                     links.masses[index] = self.masses[link.name]
         if verbose:
-            pylog.debug('Body mass: {} [kg]'.format(np.sum(self.masses.values())))
+            pylog.debug('Body mass: %s [kg]', np.sum(self.masses.values()))
 
         # Deactivate collisions
         self.set_collisions(
@@ -307,23 +307,25 @@ class Animat(SimulationModel):
             )
 
         # Model options dynamics
-        pylog.debug('Setting link dynamic properties:\n  - {}'.format(
+        pylog.debug(
+            'Setting link dynamic properties:\n  - %s',
             '\n  - '.join([
                 '{:<20} {}'.format(link.name+':', link.pybullet_dynamics)
                 for link in self.options.morphology.links
             ])
-        ))
+        )
         for link in self.options.morphology.links:
             self.set_link_dynamics(
                 link.name,
                 **link.pybullet_dynamics,
             )
-        pylog.debug('Setting joint dynamic properties:\n  - {}'.format(
+        pylog.debug(
+            'Setting joint dynamic properties:\n  - %s',
             '\n  - '.join([
                 '{:<20} {}'.format(joint.name+':', joint.pybullet_dynamics)
                 for joint in self.options.morphology.joints
             ])
-        ))
+        )
         for joint in self.options.morphology.joints:
             self.set_joint_dynamics(
                 joint.name,
@@ -332,13 +334,14 @@ class Animat(SimulationModel):
 
     def print_information(self):
         """Print information"""
-        pylog.debug('Links ids:\n{}'.format(
+        pylog.debug('Links ids:\n%s',
             '\n'.join([
                 '  {}: {}'.format(name, identity)
                 for name, identity in self.links_map.items()
             ])
-        ))
-        pylog.debug('Joints ids:\n{}'.format(
+        )
+        pylog.debug(
+            'Joints ids:\n%s',
             '\n'.join([
                 '  {}: {} (type: {})'.format(
                     name,
@@ -352,7 +355,7 @@ class Animat(SimulationModel):
                 )
                 for name, identity in self.joints_map.items()
             ])
-        ))
+        )
 
     def print_dynamics_info(self, links=None):
         """Print dynamics info"""
@@ -371,21 +374,21 @@ class Animat(SimulationModel):
                 '\n      contact damping: {}'
                 '\n      contact stiffness: {}'
             )
-
-            pylog.debug('  - {}:{}'.format(
+            pylog.debug(
+                '  - %s:%s',
                 link,
                 dynamics_msg.format(*pybullet.getDynamicsInfo(
                     self.identity(),
                     self.links_map[link]
                 ))
-            ))
-        pylog.debug('Model mass: {} [kg]'.format(self.total_mass()))
+            )
+        pylog.debug('Model mass: %s [kg]', self.total_mass())
 
     def total_mass(self):
         """Print dynamics"""
         return np.sum([
-            pybullet.getDynamicsInfo(self.identity(), self.links_map[link])[0]
-            for link in self.links_map
+            pybullet.getDynamicsInfo(self.identity(), link)[0]
+            for link in self.links_map.values()
         ])
 
     def set_collisions(self, links, group=0, mask=0):
