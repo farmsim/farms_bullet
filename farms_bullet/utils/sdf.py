@@ -104,13 +104,16 @@ def pybullet_options_from_shape(shape, **kwargs):
             img = gaussian_filter(input=img, sigma=sigma, mode='reflect')
         img = (img - np.min(img))/(np.max(img)-np.min(img))  # Normalize height
         img = np.flip(img, axis=0).T  # Cartesian coordinates
-        width = shape.geometry.size[0]/img.shape[0]*meters
-        length = shape.geometry.size[1]/img.shape[1]*meters
+        width = shape.geometry.size[0]*meters
+        length = shape.geometry.size[1]*meters
+        height = shape.geometry.size[2]*meters
+        width_step = width/img.shape[0]
+        length_step = length/img.shape[1]
         options['heightfieldData'] = img.flatten(order='F')
         options['numHeightfieldRows'] = img.shape[0]
         options['numHeightfieldColumns'] = img.shape[1]
-        options['meshScale'] = [width, length, shape.geometry.size[2]*meters]
-        options['heightfieldTextureScaling'] = img.shape[0]/width
+        options['meshScale'] = [width_step, length_step, height]
+        options['heightfieldTextureScaling'] = img.shape[0]/width_step
     else:
         raise Exception('Unknown type {}'.format(type(shape.geometry)))
     return options
