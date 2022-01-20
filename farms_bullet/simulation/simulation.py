@@ -8,14 +8,16 @@ import pybullet
 import numpy as np
 import numpy.typing as npt
 from tqdm import tqdm
+
 import farms_pylog as pylog
+from farms_data.simulation.options import SimulationOptions
+
 from ..model.animat import Animat
 from ..model.control import control_models
 from ..model.model import SimulationModels
 from ..interface.interface import Interfaces
 from ..utils.output import redirect_output
 from .simulator import init_engine, real_time_handing
-from .options import SimulationOptions
 from .render import rendering
 
 
