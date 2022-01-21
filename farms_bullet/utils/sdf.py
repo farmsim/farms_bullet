@@ -10,6 +10,7 @@ from scipy.spatial.transform import Rotation
 from scipy.ndimage.filters import gaussian_filter
 
 import farms_pylog as pylog
+from farms_data.model.options import LinkOptions
 from farms_sdf.sdf import (
     ModelSDF,
     Plane,
@@ -21,7 +22,7 @@ from farms_sdf.sdf import (
     Heightmap,
     Collision,
 )
-from ..model.options import LinkOptions
+
 from ..utils.output import redirect_output
 
 

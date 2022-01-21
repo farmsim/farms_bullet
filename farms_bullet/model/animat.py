@@ -14,10 +14,9 @@ from ..sensors.sensors import (
     JointsStatesSensor,
     ContactsSensors,
 )
+from farms_data.model.options import SpawnLoader, ModelOptions
 from .control import reset_controllers
-from .options import SpawnLoader, ModelOptions
 from .model import SimulationModel
-
 
 
 def joint_type_str(joint_type):

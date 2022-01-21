@@ -5,8 +5,7 @@ import numpy as np
 import pybullet
 
 import farms_pylog as pylog
-from farms_data.units import SimulationUnitScaling
-from .options import SpawnLoader
+from farms_data.model.options import SpawnLoader
 from ..utils.sdf import load_sdf, load_sdf_pybullet
 from ..utils.output import redirect_output
 
