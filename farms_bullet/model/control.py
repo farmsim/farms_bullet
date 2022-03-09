@@ -1,18 +1,11 @@
 """Control"""
 
-from enum import IntEnum
 import pybullet
 import numpy as np
 
+from farms_data.model.control import ControlType
 from farms_data.units import SimulationUnitScaling
 from .model import SimulationModels
-
-
-class ControlType(IntEnum):
-    """Control type"""
-    POSITION = 0
-    VELOCITY = 1
-    TORQUE = 2
 
 
 def reset_controllers(identity: int):
