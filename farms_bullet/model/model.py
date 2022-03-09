@@ -180,10 +180,12 @@ class DescriptionFormatModel(SimulationModel):
         # Visual options
         _visual_options = self.visual_options.copy()
         if _visual_options:
-            path = _visual_options.pop('path')
-            texture = pybullet.loadTexture(
-                os.path.join(os.path.dirname(self.path), path)
-            )
+            path = _visual_options.pop('path', None)
+            if path is not None:
+                texture = pybullet.loadTexture(
+                    os.path.join(os.path.dirname(self.path), path)
+                )
+                _visual_options['textureUniqueId'] = texture
             rgba_color = _visual_options.pop('rgbaColor')
             specular_color = _visual_options.pop('specularColor')
             for info in pybullet.getVisualShapeData(self._identity):
@@ -192,7 +194,6 @@ class DescriptionFormatModel(SimulationModel):
                     objectUniqueId=info[0],
                     linkIndex=info[1],
                     shapeIndex=-1,
-                    textureUniqueId=texture,
                     rgbaColor=rgba_color,
                     specularColor=specular_color,
                     **_visual_options,
