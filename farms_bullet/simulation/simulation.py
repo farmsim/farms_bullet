@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Callable, Union
+from typing import Callable
 
 import pybullet
 import numpy as np
@@ -49,7 +49,7 @@ class Simulation:
             self,
             models: SimulationModels,
             options: SimulationOptions,
-            interface: Union[Interfaces, None] = None,
+            interface: Interfaces = None,
     ):
         super().__init__()
 
@@ -73,11 +73,11 @@ class Simulation:
         self.models.spawn()
 
         # Simulation
-        self.iteration = 0
+        self.iteration: int = 0
         self.simulation_state = None
 
         # Interface
-        self.interface = (
+        self.interface: Interfaces = (
             interface
             if interface is not None and not self.options.headless
             else Interfaces()
@@ -131,7 +131,7 @@ class Simulation:
                 # warmStartingFactor=0,
             )
         pylog.debug('Physics parameters:\n%s', '\n'.join([
-            '- {}: {}'.format(key, value)
+            f'- {key}: {value}'
             for key, value in pybullet.getPhysicsEngineParameters().items()
         ]))
 

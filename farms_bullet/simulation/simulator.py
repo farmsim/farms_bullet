@@ -1,14 +1,10 @@
 """Simulator"""
 
 import time
-
 import numpy as np
-
+from nptyping import NDArray
 import pybullet
-# import pybullet_data
-
 import farms_pylog as pylog
-
 from ..utils.output import redirect_output
 
 
@@ -20,10 +16,10 @@ def init_engine(headless: bool = False, opengl2: bool = False):
     options = ''
     if not headless:
         options += (
-            '--background_color_red={}'
-            ' --background_color_green={}'
-            ' --background_color_blue={}'
-        ).format(*background_color)
+            f'--background_color_red={background_color[0]}'
+            f' --background_color_green={background_color[1]}'
+            f' --background_color_blue={background_color[2]}'
+        )
     elif opengl2:
         options += ' --opengl2'
     # options += ' --enable_experimental_opencl'
@@ -33,14 +29,20 @@ def init_engine(headless: bool = False, opengl2: bool = False):
             pybullet.DIRECT if headless else pybullet.GUI,  # pybullet.DIRECT
             # options='--enable_experimental_opencl'
             # options='--opengl2'  #  --minGraphicsUpdateTimeMs=32000
-            **kwargs_options
+            **kwargs_options,
         )
     # pybullet_path = pybullet_data.getDataPath()
     # pylog.debug('Adding pybullet data path {}'.format(pybullet_path))
     # pybullet.setAdditionalSearchPath(pybullet_path)
 
 
-def real_time_handing(timestep, tic_rt, rtl=1.0, verbose=False, **kwargs):
+def real_time_handing(
+        timestep: float,
+        tic_rt: NDArray[(3,), float],
+        rtl: float = 1.0,
+        verbose: bool = False,
+        **kwargs,
+):
     """Real-time handling"""
     tic_rt[1] = time.time()
     tic_rt[2] += timestep/rtl - (tic_rt[1] - tic_rt[0])
