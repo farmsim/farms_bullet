@@ -1,7 +1,10 @@
 """Simulation model"""
 
 import os
+from typing import List, Dict
+
 import numpy as np
+from nptyping import NDArray
 import pybullet
 
 import farms_pylog as pylog
@@ -13,7 +16,7 @@ from ..utils.output import redirect_output
 class SimulationModel:
     """SimulationModel"""
 
-    def __init__(self, identity=None):
+    def __init__(self, identity: int = None):
         super().__init__()
         self._identity = identity
         self.joint_list = None
@@ -84,8 +87,9 @@ class SimulationModel:
     @staticmethod
     def from_sdf(sdf, **kwargs):
         """Model from SDF"""
-        assert os.path.isfile(sdf), '{} does not exist'.format(sdf)
+        assert os.path.isfile(sdf), f'{sdf} does not exist'
         spawn_loader = kwargs.pop('spawn_loader', SpawnLoader.FARMS)
+        pylog.debug('Loading %s with %s', sdf, spawn_loader)
         if spawn_loader == SpawnLoader.PYBULLET:
             model = load_sdf_pybullet(sdf, **kwargs)[0]
         else:
@@ -95,16 +99,20 @@ class SimulationModel:
     @staticmethod
     def from_urdf(urdf, **kwargs):
         """Model from SDF"""
-        assert os.path.isfile(urdf), '{} does not exist'.format(urdf)
+        assert os.path.isfile(urdf), f'{urdf} does not exist'
         with redirect_output(pylog.warning):
             model = pybullet.loadURDF(urdf, **kwargs)
         return model
 
 
 class GroundModel(SimulationModel):
-    """DescriptionFormatModel"""
+    """Ground model"""
 
-    def __init__(self, position=None, orientation=None):
+    def __init__(
+            self,
+            position: NDArray[(3,), float] = None,
+            orientation: NDArray[(4,), float] = None,
+    ):
         super().__init__()
         self.position = position
         self.orientation = orientation
@@ -129,10 +137,11 @@ class DescriptionFormatModel(SimulationModel):
     """DescriptionFormatModel"""
 
     def __init__(
-            self, path,
-            load_options=None,
-            spawn_options=None,
-            visual_options=None
+            self,
+            path: str,
+            load_options: Dict = None,
+            spawn_options: Dict = None,
+            visual_options: Dict = None,
     ):
         super().__init__()
         self.path = path
@@ -144,7 +153,7 @@ class DescriptionFormatModel(SimulationModel):
         self.spawn_options = (
             spawn_options
             if spawn_options is not None
-            else {}
+            else {'posObj': [0, 0, 0], 'ornObj': [0, 0, 0, 1]}
         )
         self.visual_options = (
             visual_options
@@ -160,9 +169,9 @@ class DescriptionFormatModel(SimulationModel):
         elif extension == '.urdf':
             self._identity = self.from_urdf(self.path, **self.load_options)
         else:
-            raise Exception('Unknown description format extension .{}'.format(
-                extension
-            ))
+            raise Exception(
+                f'Unknown description format extension .{extension}'
+            )
 
         # Spawn options
         if self.spawn_options:
@@ -203,7 +212,7 @@ class DescriptionFormatModel(SimulationModel):
 class SimulationModels(SimulationModel):
     """Simulation models"""
 
-    def __init__(self, models):
+    def __init__(self, models: List[SimulationModel]):
         super().__init__()
         self._models = models
 

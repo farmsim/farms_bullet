@@ -1,12 +1,21 @@
 """Animat"""
 
 import os
-from typing import Union
+from typing import List
+
 import numpy as np
 import pybullet
+
 import farms_pylog as pylog
 from farms_data.units import SimulationUnitScaling
 from farms_data.amphibious.animat_data import ModelData
+from farms_data.model.options import (
+    SpawnLoader,
+    ModelOptions,
+    SpawnOptions,
+    JointOptions,
+)
+
 from ..utils.sdf import load_sdf, load_sdf_pybullet
 from ..sensors.sensors import (
     Sensors,
@@ -14,12 +23,12 @@ from ..sensors.sensors import (
     JointsStatesSensor,
     ContactsSensors,
 )
-from farms_data.model.options import SpawnLoader, ModelOptions
+
 from .control import reset_controllers
 from .model import SimulationModel
 
 
-def joint_type_str(joint_type):
+def joint_type_str(joint_type: int):
     """Return joint type as str"""
     return (
         'Revolute' if joint_type == pybullet.JOINT_REVOLUTE
@@ -31,7 +40,13 @@ def joint_type_str(joint_type):
     )
 
 
-def initial_pose(identity, joints, joints_options, spawn_options, units):
+def initial_pose(
+        identity: int,
+        joints: List[int],
+        joints_options: JointOptions,
+        spawn_options: SpawnOptions,
+        units: SimulationUnitScaling,
+):
     """Initial pose"""
     spawn_orientation = pybullet.getQuaternionFromEuler(
         spawn_options.orientation
@@ -70,11 +85,11 @@ class Animat(SimulationModel):
 
     def __init__(
             self,
-            identity: Union[int] = None,
-            sdf: Union[str, None] = None,
-            options: Union[ModelOptions, None] = None,
-            data: Union[ModelData, None] = None,
-            units: Union[SimulationUnitScaling, None] = None,
+            identity: int = None,
+            sdf: str = None,
+            options: ModelOptions = None,
+            data: ModelData = None,
+            units: SimulationUnitScaling = None,
     ):
         super().__init__(identity=identity)
         self.sdf = sdf
@@ -98,7 +113,7 @@ class Animat(SimulationModel):
         names = self.options.morphology.joints_names()
         for joint in names:
             assert joint in self.joints_map, (
-                'Joint {} not in {}'.format(joint, self.joints_map.keys())
+                f'Joint {joint} not in {self.joints_map.keys()}'
             )
         return [self.joints_map[joint] for joint in names]
 
@@ -118,7 +133,7 @@ class Animat(SimulationModel):
         # Reset controllers
         reset_controllers(self._identity)
 
-    def spawn_sdf(self, verbose=True, original=False):
+    def spawn_sdf(self, verbose: bool = True, original: bool = False):
         """Spawn sdf"""
         if verbose:
             pylog.debug(
@@ -126,7 +141,7 @@ class Animat(SimulationModel):
                 self.sdf,
                 'Pybullet' if original else 'FARMS',
             )
-        assert os.path.isfile(self.sdf), '{} is not a file'.format(self.sdf)
+        assert os.path.isfile(self.sdf), f'{self.sdf} is not a file'
         if original:
             self._identity, self.links_map, self.joints_map = load_sdf_pybullet(
                 sdf_path=self.sdf,
@@ -146,28 +161,30 @@ class Animat(SimulationModel):
         if verbose:
             pylog.debug(
                 '%s\n\n%s\n%s',
-                'Spawned model (Identity={})'.format(self._identity),
+                f'Spawned model (Identity={self._identity})',
                 'Model properties from pybullet (scaled units):',
                 '\n'.join([
                     (
-                        '- {: <20}:'
+                        f'- {link_name+":": <20}:'
                         ' - Mass: {:.3e}'
                         ' - Inertias: {}'
                         ' - COM: {}'
                         ' - Orientation: {}'
                     ).format(
-                        link_name+':',
                         *[
                             float(value)
                             if val_i == 0  # Mass
-                            else str(['{:.3e}'.format(val) for val in value])
+                            else str([f'{val:.3e}' for val in value])
                             if val_i == 1  # Inertias
-                            else str(['{:+.3e}'.format(val) for val in value])
+                            else str([f'{val:+.3e}' for val in value])
                             for val_i, value in enumerate(np.array(
-                                pybullet.getDynamicsInfo(self._identity, link),
-                                dtype=object,
+                                    pybullet.getDynamicsInfo(
+                                        self._identity,
+                                        link,
+                                    ),
+                                    dtype=object,
                             )[[0, 2, 3, 4]])
-                        ],
+                        ]
                     )
                     for link_name, link in self.links_map.items()
                 ]),
@@ -188,7 +205,7 @@ class Animat(SimulationModel):
         if self.options.control.sensors.links:
             for link in self.options.control.sensors.links:
                 assert link in self.links_map, (
-                    'link {} not in {}'.format(link, self.links_map)
+                    f'link {link} not in {self.links_map}'
                 )
             self.sensors.add({
                 'links': LinksStatesSensor(
@@ -235,7 +252,7 @@ class Animat(SimulationModel):
                 )
             })
 
-    def set_body_properties(self, verbose=False):
+    def set_body_properties(self, verbose: bool = False):
         """Set body properties"""
         # Masses
         for link in self.options.morphology.links:
@@ -309,7 +326,7 @@ class Animat(SimulationModel):
         pylog.debug(
             'Setting link dynamic properties:\n  - %s',
             '\n  - '.join([
-                '{:<20} {}'.format(link.name+':', link.pybullet_dynamics)
+                f'{link.name+":":<20} {link.pybullet_dynamics}'
                 for link in self.options.morphology.links
             ])
         )
@@ -321,7 +338,7 @@ class Animat(SimulationModel):
         pylog.debug(
             'Setting joint dynamic properties:\n  - %s',
             '\n  - '.join([
-                '{:<20} {}'.format(joint.name+':', joint.pybullet_dynamics)
+                f'{joint.name+":":<20} {joint.pybullet_dynamics}'
                 for joint in self.options.morphology.joints
             ])
         )
@@ -333,30 +350,26 @@ class Animat(SimulationModel):
 
     def print_information(self):
         """Print information"""
-        pylog.debug('Links ids:\n%s',
+        pylog.debug(
+            'Links ids:\n%s',
             '\n'.join([
-                '  {}: {}'.format(name, identity)
+                f'  {name}: {identity}'
                 for name, identity in self.links_map.items()
             ])
         )
         pylog.debug(
             'Joints ids:\n%s',
             '\n'.join([
-                '  {}: {} (type: {})'.format(
-                    name,
-                    identity,
-                    joint_type_str(
-                        pybullet.getJointInfo(
-                            self.identity(),
-                            identity
-                        )[2]
-                    )
-                )
+                f'  {name}: {identity} (type: {joint_type})'
                 for name, identity in self.joints_map.items()
+                for joint_type in [joint_type_str(pybullet.getJointInfo(
+                        self.identity(),
+                        identity
+                )[2])]
             ])
         )
 
-    def print_dynamics_info(self, links=None):
+    def print_dynamics_info(self, links: List = None):
         """Print dynamics info"""
         links = links if links is not None else self.links_map
         pylog.debug('Dynamics:')
@@ -390,7 +403,7 @@ class Animat(SimulationModel):
             for link in self.links_map.values()
         ])
 
-    def set_collisions(self, links, group=0, mask=0):
+    def set_collisions(self, links: List, group: int = 0, mask: int = 0):
         """Activate/Deactivate leg collisions"""
         for link in links:
             pybullet.setCollisionFilterGroupMask(
@@ -400,26 +413,34 @@ class Animat(SimulationModel):
                 collisionFilterMask=mask
             )
 
-    def set_link_dynamics(self, link, **kwargs):
+    def set_link_dynamics(self, link: str, **kwargs):
         """Set link dynamic properties"""
         for key, value in kwargs.items():
-            dynamics_kwargs = {
-                'contactStiffness': kwargs['contactStiffness'],
-                'contactDamping': kwargs['contactDamping'],
-            } if key in ('contactStiffness', 'contactDamping') else {key: value}
+            dynamics_kwargs = (
+                {
+                    'contactStiffness': kwargs['contactStiffness'],
+                    'contactDamping': kwargs['contactDamping'],
+                }
+                if key in ('contactStiffness', 'contactDamping')
+                else {key: value}
+            )
             pybullet.changeDynamics(
                 bodyUniqueId=self.identity(),
                 linkIndex=self.links_map[link],
                 **dynamics_kwargs
             )
 
-    def set_joint_dynamics(self, joint, **kwargs):
+    def set_joint_dynamics(self, joint: str, **kwargs):
         """Set joint dynamic properties"""
         for key, value in kwargs.items():
-            dynamics_kwargs = {
-                'jointLowerLimit': kwargs['jointLowerLimit'],
-                'jointUpperLimit': kwargs['jointUpperLimit'],
-            } if key in ('jointLowerLimit', 'jointUpperLimit') else {key: value}
+            dynamics_kwargs = (
+                {
+                    'jointLowerLimit': kwargs['jointLowerLimit'],
+                    'jointUpperLimit': kwargs['jointUpperLimit'],
+                }
+                if key in ('jointLowerLimit', 'jointUpperLimit')
+                else {key: value}
+            )
             pybullet.changeDynamics(
                 bodyUniqueId=self.identity(),
                 linkIndex=self.joints_map[joint],
