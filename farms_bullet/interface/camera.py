@@ -2,8 +2,8 @@
 
 import numpy as np
 from tqdm import tqdm
+
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import matplotlib.animation as manimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -14,7 +14,7 @@ import farms_pylog as pylog
 class Camera:
     """Camera"""
 
-    def __init__(self, timestep, target_identity=None, **kwargs):
+    def __init__(self, timestep: float, target_identity: int = None, **kwargs):
         super().__init__()
         self.target = target_identity
         self.timestep = timestep
@@ -40,7 +40,7 @@ class Camera:
 class CameraTarget(Camera):
     """Camera with target following"""
 
-    def __init__(self, target_identity, **kwargs):
+    def __init__(self, target_identity: int, **kwargs):
         super().__init__(**kwargs)
         self.target = target_identity
         self.target_pos = kwargs.pop(
@@ -63,7 +63,7 @@ class CameraTarget(Camera):
 class UserCamera(CameraTarget):
     """UserCamera"""
 
-    def __init__(self, target_identity, **kwargs):
+    def __init__(self, target_identity: int, **kwargs):
         super().__init__(target_identity, **kwargs)
         self.update(use_camera=False)
 
@@ -77,7 +77,7 @@ class UserCamera(CameraTarget):
             cameraTargetPosition=self.target_pos
         )
 
-    def update(self, use_camera=True):
+    def update(self, use_camera: bool = True):
         """Camera view"""
         if use_camera:
             (
@@ -101,7 +101,14 @@ class UserCamera(CameraTarget):
 class CameraRecord(CameraTarget):
     """Camera recording"""
 
-    def __init__(self, timestep, target_identity, n_iterations, fps, **kwargs):
+    def __init__(
+            self,
+            timestep: float,
+            target_identity: int,
+            n_iterations: int,
+            fps: float,
+            **kwargs,
+    ):
         super().__init__(
             target_identity=target_identity,
             timestep=timestep,
@@ -116,7 +123,7 @@ class CameraRecord(CameraTarget):
             dtype=np.uint8
         )
 
-    def record(self, iteration):
+    def record(self, iteration: int):
         """Record camera"""
         if not iteration % (self.skips+1):
             sample = iteration if not self.skips else iteration//(self.skips+1)
@@ -143,7 +150,12 @@ class CameraRecord(CameraTarget):
                 flags=pybullet.ER_NO_SEGMENTATION_MASK
             )[2][:, :, :3]
 
-    def save(self, filename='video.avi', iteration=None, writer='ffmpeg'):
+    def save(
+            self,
+            filename: str = 'video.avi',
+            iteration: int = None,
+            writer: str = 'ffmpeg',
+    ):
         """Save recording"""
         data = (
             self.data[:iteration//(self.skips+1)]
@@ -152,12 +164,11 @@ class CameraRecord(CameraTarget):
         )
         ffmpegwriter = manimation.writers[writer]
         pylog.debug(
-            'Recording video to {} with {} (fps={}, skips={})'.format(
-                filename,
-                writer,
-                self.fps,
-                self.skips,
-            )
+            'Recording video to %s with %s (fps=%s, skips=%s)',
+            filename,
+            writer,
+            self.fps,
+            self.skips,
         )
         metadata = dict(
             title='FARMS simulation',
