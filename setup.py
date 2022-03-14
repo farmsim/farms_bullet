@@ -30,12 +30,12 @@ setup(
     ext_modules=cythonize(
         [
             Extension(
-                'farms_bullet.{}*'.format(folder.replace('/', '_') + '.' if folder else ''),
-                sources=['farms_bullet/{}*.pyx'.format(folder + '/' if folder else '')],
+                f'farms_bullet.{folder}.*',
+                sources=[f'farms_bullet/{folder}/*.pyx'],
                 extra_compile_args=['-O3'],  # , '-fopenmp'
                 extra_link_args=['-O3']  # , '-fopenmp'
             )
-            for folder in ['sensors', 'swimming', 'utils']
+            for folder in ['sensors', 'swimming']
         ],
         include_path=[np.get_include()] + get_include_paths(),
         compiler_directives={
@@ -53,10 +53,14 @@ setup(
     ),
     zip_safe=False,
     install_requires=[
+        'farms_pylog',
+        'farms_data',
         'cython',
         'numpy',
+        'scipy',
+        'matplotlib',
+        'tqdm',
         'trimesh',
         'pybullet',
-        'deepdish',
     ],
 )
