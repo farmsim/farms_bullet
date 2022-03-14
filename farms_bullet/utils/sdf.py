@@ -5,12 +5,14 @@ from typing import List, Tuple, Dict
 
 import pybullet
 import numpy as np
+from nptyping import NDArray
 from imageio import imread
 from scipy.spatial.transform import Rotation
 from scipy.ndimage.filters import gaussian_filter
 
 import farms_pylog as pylog
 from farms_data.model.options import LinkOptions
+from farms_data.units import SimulationUnitScaling
 from farms_sdf.sdf import (
     ModelSDF,
     Plane,
@@ -26,7 +28,7 @@ from farms_sdf.sdf import (
 from ..utils.output import redirect_output
 
 
-def rot_quat(rot):
+def rot_quat(rot: NDArray[(3,), float]):
     """Quaternion from Euler"""
     return pybullet.getQuaternionFromEuler(rot)
 
@@ -116,7 +118,7 @@ def pybullet_options_from_shape(shape, **kwargs):
         options['meshScale'] = [width_step, length_step, height]
         options['heightfieldTextureScaling'] = img.shape[0]/width_step
     else:
-        raise Exception('Unknown type {}'.format(type(shape.geometry)))
+        raise Exception(f'Unknown type {type(shape.geometry)}')
     return options
 
 
@@ -185,16 +187,16 @@ def rearange_base_link_dict(dictionary, base_link_index):
 
 def load_sdf(
         sdf_path: str,
+        units: SimulationUnitScaling,
         force_concave: bool = False,
         reset_control: bool = True,
         links_options: List[LinkOptions] = None,
-        use_self_collision: bool = False,
         **kwargs,
 ) -> Tuple[int, Dict[str, int], Dict[str, int]]:
     """Load SDF"""
-    units = kwargs.pop('units')
-    verbose = kwargs.pop('verbose', False)
+    verbose = kwargs.pop('verbose', True)
     global_scaling = kwargs.pop('globalScaling', 1)
+    use_self_collision = kwargs.pop('use_self_collision', False)
     assert not kwargs, kwargs
     sdf = ModelSDF.read(sdf_path)[0]
     folder = os.path.dirname(sdf_path)
@@ -259,14 +261,11 @@ def load_sdf(
             )
             if i > 0:
                 # Dummy links to support multiple visuals and collisions
-                link_name = '{}_dummy_{}'.format(link.name, i-1)
+                link_name = f'{link.name}_dummy_{i-1}'
                 link_index[link_name] = link_i
                 links_names.append(link_name)
                 assert link.name in link_index, (
-                    'Link {} is not in link_index {}'.format(
-                        link.name,
-                        link_index,
-                    )
+                    f'Link {link.name} is not in link_index {link_index}'
                 )
                 parenting[link_name] = link.name
                 link_pos.append(link.pose[:3])
@@ -276,7 +275,7 @@ def load_sdf(
                 link_inertias.append([0, 0, 0])
                 link_inertiaori.append([0, 0, 0, 1])
                 joint_types.append(pybullet.JOINT_FIXED)
-                joints_names.append('joint_dummy_{}_{}'.format(link.name, i-1))
+                joints_names.append(f'joint_dummy_{link.name}_{i-1}')
                 joints_axis.append([0.0, 0.0, 1.0])
             else:
                 # Link information
@@ -332,19 +331,10 @@ def load_sdf(
     link_index = rearange_base_link_dict(link_index, base_link_index)
 
     for name in links_names[1:]:
-        assert name in parenting, (
-            'Link \'{}\' not in {}'.format(
-                name,
-                parenting,
-            )
-        )
+        assert name in parenting, f'Link \'{name}\' not in {parenting}'
         assert parenting[name] in link_index, (
-            'Link \'{}\' (Parent of \'{}\') not in {}\n\nParenting:\n{}'.format(
-                parenting[name],
-                name,
-                link_index,
-                parenting,
-            )
+            f'Link \'{parenting[name]}\' (Parent of \'{name}\')'
+            f' not in {link_index}\n\nParenting:\n{parenting}'
         )
     link_parent_indices = [
         link_index[parenting[name]]
@@ -398,31 +388,24 @@ def load_sdf(
         pylog.debug('\n'.join(
             [
                 (
-                    '0 (Base link): {}'
-                    ' - index: {}'
-                    ' - mass: {:.4f} [g]'
+                    f'0 (Base link): {name}'
+                    f' - index: {link_i}'
+                    f' - mass: {1e3*link_masses[link_i]:.4f} [g]'
                     ' - inertias: [{:.3e}, {:.3e}, {:.3e}]'
                 ).format(
-                    name,
-                    link_i,
-                    1e3*link_masses[link_i],
                     link_inertias[link_i][0],
                     link_inertias[link_i][1],
                     link_inertias[link_i][2],
                 )
                 if link_i == 0
                 else (
-                    '{: >3} {: <20}'
-                    ' - parent: {: <20} ({: >2})'
-                    ' - mass: {:.4f} [g]'
+                    f'{str(link_i)+":": >3} {name: <20}'
+                    f' - parent: {parenting[name]: <20}'
+                    f' ({link_index[parenting[name]]: >2})'
+                    f' - mass: {1e3*link_masses[link_i]:.4f} [g]'
                     ' - inertias: [{:.3e} {:.3e} {:.3e}]'
                     ' - joint: {: <20} - axis: {}'
                 ).format(
-                    '{}:'.format(link_i),
-                    name,
-                    parenting[name],
-                    link_index[parenting[name]],
-                    1e3*link_masses[link_i],
                     link_inertias[link_i][0],
                     link_inertias[link_i][1],
                     link_inertias[link_i][2],
@@ -430,7 +413,7 @@ def load_sdf(
                     joints_axis[link_i-1],
                 )
                 for link_i, name in enumerate(links_names)
-            ] + ['\nTotal mass: {:.4f} [g]'.format(1e3*sum(link_masses))]
+            ] + [f'\nTotal mass: {1e3*sum(link_masses):.4f} [g]']
         ))
         pylog.debug('Spawning model')
 
@@ -491,7 +474,7 @@ def load_sdf(
 
     # Set inertias
     for link_name, inertia in zip(links_names, link_inertias):
-        assert link_name in links, 'Link {} not in {}'.format(link_name, links)
+        assert link_name in links, f'Link {link_name} not in {links}'
         pybullet.changeDynamics(
             bodyUniqueId=identity,
             linkIndex=links[link_name],
@@ -593,8 +576,5 @@ def load_sdf_pybullet(sdf_path, index=0, morphology_links=None, **kwargs):
                 links[link] = -1
                 break
         for link in morphology_links:
-            assert link in links, 'Link {} not in {}'.format(
-                link,
-                links,
-            )
+            assert link in links, f'Link {link} not in {links}'
     return identity, links, joints

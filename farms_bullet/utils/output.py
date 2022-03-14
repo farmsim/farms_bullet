@@ -4,11 +4,11 @@ import os
 import sys
 import contextlib
 from inspect import currentframe, getsourcefile
-from typing import Callable, Union
+from typing import Callable
 
 
 @contextlib.contextmanager
-def redirect_output(stdout_function: Union[Callable, None] = None):
+def redirect_output(stdout_function: Callable = None):
     """Redirect output"""
     if os.name == 'nt':
         yield
@@ -34,10 +34,11 @@ def redirect_output(stdout_function: Union[Callable, None] = None):
             os.close(stdout_original)
             if stdout_function is not None:
                 frame = currentframe().f_back.f_back
-                header = '[REDIRECT] {}::{}::{}():\n>   '.format(
-                    os.path.basename(getsourcefile(frame)),
-                    frame.f_code.co_name,
-                    frame.f_lineno,
+                header = (
+                    '[REDIRECT]'
+                    f' {os.path.basename(getsourcefile(frame))}'
+                    f'::{frame.f_code.co_name}'
+                    f'::{frame.f_lineno}():\n>   '
                 )
                 captured_stdout = header + captured_stdout.replace(
                     '\n',
