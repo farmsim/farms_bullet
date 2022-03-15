@@ -17,7 +17,6 @@ __pycache__
 *.npy
 *.profile
 *.avi
-*.png
 *.csv
 *scripts/benchmark*
 *old*
