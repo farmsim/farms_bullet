@@ -141,12 +141,12 @@ cdef class JointsStatesSensor(DoubleArray3D):
 cdef class LinksStatesSensor(DoubleArray3D):
     """Links states sensor
 
-    links is an array of size (N, 3) where the 3 values are:
-    [
-        link_name,  # Name of the link
-        link_i,  # Index in table
-        link_id  # Index in model
-    ]
+    links is an list of size (N, 3) where the 3 values corrspond to:
+
+    #. link_name: Name of the link
+    #. link_i: Index in table
+    #. link_id: Index in model
+
     """
 
     def __init__(self, array, model_id, links, units, transform_inv=None):

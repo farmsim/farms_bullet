@@ -1,5 +1,6 @@
 *~
 *.directory
+ducks/_build
 build/*
 bin/*
 GPATH

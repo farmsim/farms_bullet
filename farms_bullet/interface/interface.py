@@ -65,13 +65,7 @@ class DebugParameter:
 
 
 class ParameterPlay(DebugParameter):
-    """Play/pause parameter
-
-    self.value:          Boolean
-    self.previous_value: Keeps track of the last measured value
-    self.get_value():    Returns the number of times play/plause button
-                         has been pressed
-    """
+    """Play/pause parameter"""
 
     def __init__(self, initial_value: bool = True):
         self.previous_value = initial_value
