@@ -86,13 +86,11 @@ class Animat(SimulationModel):
     def __init__(
             self,
             identity: int = None,
-            sdf: str = None,
             options: ModelOptions = None,
             data: ModelData = None,
             units: SimulationUnitScaling = None,
     ):
         super().__init__(identity=identity)
-        self.sdf = sdf
         self.options = options
         self.links_map = {}
         self.joints_map = {}
@@ -135,22 +133,23 @@ class Animat(SimulationModel):
 
     def spawn_sdf(self, verbose: bool = True, original: bool = False):
         """Spawn sdf"""
+        sdf_path = self.options.sdf_path
         if verbose:
             pylog.debug(
                 'Spawning %s using %s',
-                self.sdf,
+                sdf_path,
                 'Pybullet' if original else 'FARMS',
             )
-        assert os.path.isfile(self.sdf), f'{self.sdf} is not a file'
+        assert os.path.isfile(sdf_path), f'{sdf_path} is not a file'
         if original:
             self._identity, self.links_map, self.joints_map = load_sdf_pybullet(
-                sdf_path=self.sdf,
+                sdf_path=sdf_path,
                 morphology_links=self.options.morphology.links_names(),
                 units=self.units,
             )
         else:
             self._identity, self.links_map, self.joints_map = load_sdf(
-                sdf_path=self.sdf,
+                sdf_path=sdf_path,
                 force_concave=False,
                 reset_control=True,
                 verbose=verbose,
