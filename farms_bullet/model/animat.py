@@ -7,12 +7,12 @@ import numpy as np
 import pybullet
 
 import farms_pylog as pylog
-from farms_data.model.control import ModelController
+from farms_data.model.control import AnimatController
 from farms_data.units import SimulationUnitScaling
-from farms_data.model.data import ModelData
+from farms_data.model.data import AnimatData
 from farms_data.model.options import (
     SpawnLoader,
-    ModelOptions,
+    AnimatOptions,
     SpawnOptions,
     JointOptions,
 )
@@ -87,9 +87,9 @@ class Animat(SimulationModel):
     def __init__(
             self,
             identity: int = None,
-            options: ModelOptions = None,
-            data: ModelData = None,
-            controller: ModelController = None,
+            options: AnimatOptions = None,
+            data: AnimatData = None,
+            controller: AnimatController = None,
             units: SimulationUnitScaling = None,
     ):
         super().__init__(identity=identity)
@@ -99,7 +99,7 @@ class Animat(SimulationModel):
         self.masses = {}
         self.sensors = Sensors()
         self.data = data
-        self.controller: ModelController = controller
+        self.controller: AnimatController = controller
         self.units = units
 
     def links_identities(self):
@@ -164,8 +164,8 @@ class Animat(SimulationModel):
         if verbose:
             pylog.debug(
                 '%s\n\n%s\n%s',
-                f'Spawned model (Identity={self._identity})',
-                'Model properties from pybullet (scaled units):',
+                f'Spawned animat (Identity={self._identity})',
+                'Animat properties from pybullet (scaled units):',
                 '\n'.join([
                     (
                         f'- {link_name+":": <20}:'
@@ -397,7 +397,7 @@ class Animat(SimulationModel):
                     self.links_map[link]
                 ))
             )
-        pylog.debug('Model mass: %s [kg]', self.total_mass())
+        pylog.debug('Animat mass: %s [kg]', self.total_mass())
 
     def total_mass(self):
         """Print dynamics"""
