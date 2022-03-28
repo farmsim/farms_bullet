@@ -87,6 +87,7 @@ class SimulationModel:
     @staticmethod
     def from_sdf(sdf, **kwargs):
         """Model from SDF"""
+        sdf = os.path.expandvars(sdf)
         assert os.path.isfile(sdf), f'{sdf} does not exist'
         spawn_loader = kwargs.pop('spawn_loader', SpawnLoader.FARMS)
         pylog.debug('Loading %s with %s', sdf, spawn_loader)

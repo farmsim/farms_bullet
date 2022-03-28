@@ -140,6 +140,7 @@ class Animat(SimulationModel):
                 sdf_path,
                 'Pybullet' if original else 'FARMS',
             )
+        sdf_path = os.path.expandvars(sdf_path)
         assert os.path.isfile(sdf_path), f'{sdf_path} is not a file'
         if original:
             self._identity, self.links_map, self.joints_map = load_sdf_pybullet(

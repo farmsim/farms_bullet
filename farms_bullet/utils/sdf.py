@@ -13,7 +13,7 @@ from scipy.ndimage.filters import gaussian_filter
 import farms_pylog as pylog
 from farms_data.model.options import LinkOptions
 from farms_data.units import SimulationUnitScaling
-from farms_sdf.sdf import (
+from farms_data.io.sdf import (
     ModelSDF,
     Plane,
     Box,
