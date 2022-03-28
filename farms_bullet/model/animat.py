@@ -7,8 +7,9 @@ import numpy as np
 import pybullet
 
 import farms_pylog as pylog
+from farms_data.model.control import ModelController
 from farms_data.units import SimulationUnitScaling
-from farms_data.amphibious.animat_data import ModelData
+from farms_data.model.data import ModelData
 from farms_data.model.options import (
     SpawnLoader,
     ModelOptions,
@@ -88,6 +89,7 @@ class Animat(SimulationModel):
             identity: int = None,
             options: ModelOptions = None,
             data: ModelData = None,
+            controller: ModelController = None,
             units: SimulationUnitScaling = None,
     ):
         super().__init__(identity=identity)
@@ -97,6 +99,7 @@ class Animat(SimulationModel):
         self.masses = {}
         self.sensors = Sensors()
         self.data = data
+        self.controller: ModelController = controller
         self.units = units
 
     def links_identities(self):
