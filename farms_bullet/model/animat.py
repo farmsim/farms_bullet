@@ -76,8 +76,8 @@ def initial_pose(
         pybullet.resetJointState(
             bodyUniqueId=identity,
             jointIndex=joint,
-            targetValue=info.initial_position,
-            targetVelocity=info.initial_velocity/units.seconds,
+            targetValue=info.initial[0],
+            targetVelocity=info.initial[1]/units.seconds,
         )
 
 
@@ -325,31 +325,68 @@ class Animat(SimulationModel):
                 jointDamping=0,
             )
 
-        # Model options dynamics
+        # Links dynamics
+        links_dynamics = {
+            link.name: {
+                # Friction
+                'lateralFriction': link.friction[0],
+                'spinningFriction': link.friction[1],
+                'rollingFriction': link.friction[2],
+            }
+            for link in self.options.morphology.links
+        }
+        # Extras
+        for link in self.options.morphology.links:
+            for key in (
+                    'linearDamping',
+                    'angularDamping',
+                    'restitution',
+                    'contactStiffness',
+                    'contactDamping',
+                    'frictionAnchor',
+                    'anisotropicFriction',
+                    'mass',
+            ):
+                if key in link.extras:
+                    links_dynamics[link.name][key] = link.extras[key]
         pylog.debug(
             'Setting link dynamic properties:\n  - %s',
             '\n  - '.join([
-                f'{link.name+":":<20} {link.pybullet_dynamics}'
-                for link in self.options.morphology.links
+                f'{link_name+":":<20} {link_dynamics}'
+                for link_name, link_dynamics in links_dynamics.items()
             ])
         )
-        for link in self.options.morphology.links:
-            self.set_link_dynamics(
-                link.name,
-                **link.pybullet_dynamics,
-            )
+        for link_name, link_dynamics in links_dynamics.items():
+            self.set_link_dynamics(link_name, **link_dynamics)
+
+        # Joints dynamics
+        joints_dynamics = {
+            joint.name: {
+                'jointLowerLimit': joint.limits[0][0],
+                'jointUpperLimit': joint.limits[0][1],
+                'maxJointVelocity': joint.limits[1][1],
+                'jointDamping': joint.damping,
+            }
+            for joint in self.options.morphology.joints
+        }
+        joints_ctrl = {
+            joint.joint_name: joint
+            for joint in self.options.control.joints
+        }
+        for joint in self.options.morphology.joints:
+            if joint.name in joints_ctrl:
+                joints_dynamics[joint.name]['jointLimitForce'] = (
+                    joints_ctrl[joint.name].limits_torque[1]
+                )
         pylog.debug(
             'Setting joint dynamic properties:\n  - %s',
             '\n  - '.join([
-                f'{joint.name+":":<20} {joint.pybullet_dynamics}'
-                for joint in self.options.morphology.joints
+                f'{joint_name+":":<20} {joint_dynamics}'
+                for joint_name, joint_dynamics in joints_dynamics.items()
             ])
         )
-        for joint in self.options.morphology.joints:
-            self.set_joint_dynamics(
-                joint.name,
-                **joint.pybullet_dynamics,
-            )
+        for joint_name, joint_dynamics in joints_dynamics.items():
+            self.set_joint_dynamics(joint_name, **joint_dynamics)
 
     def print_information(self):
         """Print information"""
