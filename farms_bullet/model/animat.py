@@ -369,14 +369,14 @@ class Animat(SimulationModel):
             }
             for joint in self.options.morphology.joints
         }
-        joints_ctrl = {
-            joint.joint_name: joint
-            for joint in self.options.control.joints
+        motors_ctrl = {
+            motor.joint_name: motor
+            for motor in self.options.control.motors
         }
         for joint in self.options.morphology.joints:
-            if joint.name in joints_ctrl:
+            if joint.name in motors_ctrl:
                 joints_dynamics[joint.name]['jointLimitForce'] = (
-                    joints_ctrl[joint.name].limits_torque[1]
+                    motors_ctrl[joint.name].limits_torque[1]
                 )
         pylog.debug(
             'Setting joint dynamic properties:\n  - %s',
