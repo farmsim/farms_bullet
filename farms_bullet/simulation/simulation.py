@@ -10,7 +10,7 @@ import numpy.typing as npt
 from tqdm import tqdm
 
 import farms_pylog as pylog
-from farms_data.simulation.options import SimulationOptions
+from farms_core.simulation.options import SimulationOptions
 
 from ..model.animat import Animat
 from ..model.control import control_models

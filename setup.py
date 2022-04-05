@@ -11,8 +11,8 @@ import numpy as np
 dist.Distribution().fetch_build_eggs(['Cython>=0.15.1'])
 from Cython.Build import cythonize
 
-dist.Distribution().fetch_build_eggs(['farms_data'])
-from farms_data import get_include_paths
+dist.Distribution().fetch_build_eggs(['farms_core'])
+from farms_core import get_include_paths
 
 DEBUG = False
 
@@ -54,7 +54,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'farms_pylog',
-        'farms_data',
+        'farms_core',
         'cython',
         'numpy',
         'scipy',

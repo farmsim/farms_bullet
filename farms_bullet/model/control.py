@@ -3,8 +3,8 @@
 import pybullet
 import numpy as np
 
-from farms_data.model.control import ControlType
-from farms_data.units import SimulationUnitScaling
+from farms_core.model.control import ControlType
+from farms_core.units import SimulationUnitScaling
 from .model import SimulationModels
 
 

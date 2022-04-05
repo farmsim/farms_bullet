@@ -11,9 +11,9 @@ from scipy.spatial.transform import Rotation
 from scipy.ndimage.filters import gaussian_filter
 
 import farms_pylog as pylog
-from farms_data.model.options import LinkOptions
-from farms_data.units import SimulationUnitScaling
-from farms_data.io.sdf import (
+from farms_core.model.options import LinkOptions
+from farms_core.units import SimulationUnitScaling
+from farms_core.io.sdf import (
     ModelSDF,
     Plane,
     Box,

@@ -7,10 +7,10 @@ import numpy as np
 import pybullet
 
 import farms_pylog as pylog
-from farms_data.model.control import AnimatController
-from farms_data.units import SimulationUnitScaling
-from farms_data.model.data import AnimatData
-from farms_data.model.options import (
+from farms_core.model.control import AnimatController
+from farms_core.units import SimulationUnitScaling
+from farms_core.model.data import AnimatData
+from farms_core.model.options import (
     SpawnLoader,
     AnimatOptions,
     SpawnOptions,
