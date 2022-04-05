@@ -136,7 +136,7 @@ class Animat(SimulationModel):
 
     def spawn_sdf(self, verbose: bool = True, original: bool = False):
         """Spawn sdf"""
-        sdf_path = self.options.sdf_path
+        sdf_path = self.options.sdf
         if verbose:
             pylog.debug(
                 'Spawning %s using %s',
