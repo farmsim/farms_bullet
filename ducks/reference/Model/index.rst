@@ -7,4 +7,5 @@ Model
 
 .. include:: model.rst
 .. include:: animat.rst
+.. include:: arena.rst
 .. include:: control.rst
