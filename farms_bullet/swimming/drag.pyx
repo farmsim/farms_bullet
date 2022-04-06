@@ -6,7 +6,7 @@ import pybullet
 import numpy as np
 cimport numpy as np
 
-from farms_core.sensors.data_cy cimport HydrodynamicsArrayCy, LinkSensorArrayCy
+from farms_core.sensors.data_cy cimport LinkSensorArrayCy, XfrcArrayCy
 from farms_core.utils.transform cimport quat_conj, quat_mult, quat_rot
 
 
@@ -154,8 +154,8 @@ cpdef bint drag_forces(
         unsigned int iteration,
         LinkSensorArrayCy data_links,
         unsigned int links_index,
-        HydrodynamicsArrayCy data_hydrodynamics,
-        unsigned int hydro_index,
+        XfrcArrayCy data_xfrc,
+        unsigned int xfrc_index,
         DTYPEv2 coefficients,
         DTYPEv2 z3,
         DTYPEv2 z4,
@@ -168,14 +168,14 @@ cpdef bint drag_forces(
 ) nogil:
     """Drag swimming
 
-    The forces and torques are stored into data_hydrodynamics.array in
+    The forces and torques are stored into data_xfrc.array in
     the CoM frame
 
     :param iteration: Simulation iteration
     :param data_links: Links data
     :param links_index: Link data index
-    :param data_hydrodynamics: Hydrodynamics data
-    :param hydro_index: Hydrodynamics data index
+    :param data_xfrc: Xfrc data
+    :param xfrc_index: Xfrc data index
     :param coefficients: Drag coefficients
     :param z3: Temporary array
     :param z4: Temporary array
@@ -264,15 +264,15 @@ cpdef bint drag_forces(
 
     # Store data
     for i in range(3):
-        data_hydrodynamics.array[iteration, hydro_index, i] = force[i]
-        data_hydrodynamics.array[iteration, hydro_index, i+3] = torque[i]
+        data_xfrc.array[iteration, xfrc_index, i] = force[i]
+        data_xfrc.array[iteration, xfrc_index, i+3] = torque[i]
     return 1
 
 
 cpdef void swimming_apply_forces(
         unsigned int iteration,
-        HydrodynamicsArrayCy data_hydrodynamics,
-        unsigned int hydro_index,
+        XfrcArrayCy data_xfrc,
+        unsigned int xfrc_index,
         int model,
         int link_id,
         int frame=pybullet.LINK_FRAME,
@@ -283,8 +283,8 @@ cpdef void swimming_apply_forces(
     """Swimming motion
 
     :param iteration: Simulation iterations
-    :param data_hydrodynamics: Hydrodynamics data
-    :param hydro_index: Hydrodynamics data index
+    :param data_xfrc: Xfrc data
+    :param xfrc_index: Xfrc data index
     :param model: Model identity
     :param link_id: Link identity
     :param frame: Force application frame (LINK_FRAME or WORLD_FRAME)
@@ -294,23 +294,23 @@ cpdef void swimming_apply_forces(
 
     """
     cdef unsigned int i  # , sensor_i, flags
-    cdef np.ndarray hydro_force=np.zeros(3), hydro_torque=np.zeros(3)
-    cdef DTYPEv1 hydro = data_hydrodynamics.array[iteration, hydro_index]
+    cdef np.ndarray xfrc_force=np.zeros(3), xfrc_torque=np.zeros(3)
+    cdef DTYPEv1 xfrc = data_xfrc.array[iteration, xfrc_index]
     for i in range(3):
-        hydro_force[i] = hydro[i]*newtons
-        hydro_torque[i] = hydro[i+3]*torques
+        xfrc_force[i] = xfrc[i]*newtons
+        xfrc_torque[i] = xfrc[i+3]*torques
     # pybullet.LINK_FRAME applies force in inertial frame, not URDF frame
     pybullet.applyExternalForce(
         model,
         link_id,
-        forceObj=hydro_force.tolist(),
+        forceObj=xfrc_force.tolist(),
         posObj=pos.tolist(),
         flags=frame,
     )
     pybullet.applyExternalTorque(
         model,
         link_id,
-        torqueObj=hydro_torque.tolist(),
+        torqueObj=xfrc_torque.tolist(),
         flags=frame,
     )
 
@@ -351,53 +351,53 @@ cpdef swimming_debug(iteration, data_links, links):
             )
 
 
-cdef draw_hydrodynamics(
+cdef draw_xfrc(
     unsigned int iteration,
     int model,
     int link_id,
-    HydrodynamicsArrayCy data_hydrodynamics,
-    unsigned int hydro_index,
-    object hydrodynamics_plot,
+    XfrcArrayCy data_xfrc,
+    unsigned int xfrc_index,
+    object xfrc_plot,
     bint new_active,
     double meters,
     double scale=1,
 ):
-    """Draw hydrodynamics forces
+    """Draw xfrc forces
 
     :param iteration: Simulation iteration
     :param model: Model identity
     :param link_id: Link identity
-    :param data_hydrodynamics: Hydrodynamics data
-    :param hydro_index: Hydrodynamics data index
-    :param hydrodynamics_plot: Hydrodynamcis plotting objects
+    :param data_xfrc: Xfrc data
+    :param xfrc_index: Xfrc data index
+    :param xfrc_plot: Xfrcdynamcis plotting objects
     :param new_active: Bool to decalre if recently active
     :param meters: Meters scaling
     :param scale: Plot scaling factor
 
     """
-    cdef bint old_active = hydrodynamics_plot[hydro_index][0]
-    cdef DTYPEv1 force = data_hydrodynamics.array[iteration, hydro_index, :3]
+    cdef bint old_active = xfrc_plot[xfrc_index][0]
+    cdef DTYPEv1 force = data_xfrc.array[iteration, xfrc_index, :3]
     if new_active:
-        hydrodynamics_plot[hydro_index][0] = True
-        hydrodynamics_plot[hydro_index][1] = pybullet.addUserDebugLine(
+        xfrc_plot[xfrc_index][0] = True
+        xfrc_plot[xfrc_index][1] = pybullet.addUserDebugLine(
             lineFromXYZ=[0, 0, 0],
             lineToXYZ=scale*np.array(force),
             lineColorRGB=[0, 0, 1],
             lineWidth=7*meters,
             parentObjectUniqueId=model,
             parentLinkIndex=link_id,
-            replaceItemUniqueId=hydrodynamics_plot[hydro_index][1],
+            replaceItemUniqueId=xfrc_plot[xfrc_index][1],
         )
     elif old_active and not new_active:
-        hydrodynamics_plot[hydro_index][0] = False
-        hydrodynamics_plot[hydro_index][1] = pybullet.addUserDebugLine(
+        xfrc_plot[xfrc_index][0] = False
+        xfrc_plot[xfrc_index][1] = pybullet.addUserDebugLine(
             lineFromXYZ=[0, 0, 0],
             lineToXYZ=[0, 0, 0],
             lineColorRGB=[0, 0, 1],
             lineWidth=0,
             parentObjectUniqueId=model,
             parentLinkIndex=0,
-            replaceItemUniqueId=hydrodynamics_plot[hydro_index][1],
+            replaceItemUniqueId=xfrc_plot[xfrc_index][1],
         )
 
 
@@ -444,23 +444,23 @@ cdef class SwimmingHandler:
 
     cdef object animat
     cdef object links
-    cdef object hydro
+    cdef object xfrc
     cdef int model
     cdef int frame
     cdef unsigned int n_links
     cdef bint drag
     cdef bint sph
     cdef bint buoyancy
-    cdef bint show_hydrodynamics
+    cdef bint show_xfrc
     cdef WaterProperties water
     cdef double meters
     cdef double newtons
     cdef double torques
-    cdef double hydrodynamics_scale
+    cdef double xfrc_scale
     cdef int[:] links_ids
     cdef int[:] links_swimming
     cdef unsigned int[:] links_indices
-    cdef unsigned int[:] hydro_indices
+    cdef unsigned int[:] xfrc_indices
     cdef DTYPEv1 masses
     cdef DTYPEv1 heights
     cdef DTYPEv1 densities
@@ -472,13 +472,13 @@ cdef class SwimmingHandler:
         super(SwimmingHandler, self).__init__()
         self.animat = animat
         self.links = animat.data.sensors.links
-        self.hydro = animat.data.sensors.hydrodynamics
+        self.xfrc = animat.data.sensors.xfrc
         self.model = animat.identity()
         physics_options = animat.options.physics
         self.drag = bool(physics_options.drag)
         self.sph = bool(physics_options.sph)
         self.buoyancy = bool(physics_options.buoyancy)
-        self.show_hydrodynamics = bool(animat.options.show_hydrodynamics)
+        self.show_xfrc = bool(animat.options.show_xfrc)
         self.meters = float(animat.units.meters)
         self.newtons = float(animat.units.newtons)
         self.torques = float(animat.units.torques)
@@ -490,7 +490,7 @@ cdef class SwimmingHandler:
         )
         # pybullet.LINK_FRAME applies force in inertial frame, not URDF frame
         self.frame = pybullet.LINK_FRAME  # pybullet.WORLD_FRAME
-        self.hydrodynamics_scale = 1*self.meters
+        self.xfrc_scale = 1*self.meters
         self.z3 = np.zeros([7, 3])
         self.z4 = np.zeros([7, 4])
         links = [
@@ -512,8 +512,8 @@ cdef class SwimmingHandler:
             for _aabb in aabb
         ])/self.meters
         self.densities = np.array([link.density for link in links])
-        self.hydro_indices = np.array([
-            self.hydro.names.index(link.name)
+        self.xfrc_indices = np.array([
+            self.xfrc.names.index(link.name)
             for link in links
         ], dtype=np.uintc)
         self.links_indices = np.array([
@@ -542,8 +542,8 @@ cdef class SwimmingHandler:
                         iteration=iteration,
                         data_links=self.links,
                         links_index=self.links_indices[i],
-                        data_hydrodynamics=self.hydro,
-                        hydro_index=self.hydro_indices[i],
+                        data_xfrc=self.xfrc,
+                        xfrc_index=self.xfrc_indices[i],
                         coefficients=self.links_coefficients[i],
                         z3=self.z3,
                         z4=self.z4,
@@ -557,8 +557,8 @@ cdef class SwimmingHandler:
                 if apply_force:
                     swimming_apply_forces(
                         iteration=iteration,
-                        data_hydrodynamics=self.hydro,
-                        hydro_index=self.hydro_indices[i],
+                        data_xfrc=self.xfrc,
+                        xfrc_index=self.xfrc_indices[i],
                         model=self.model,
                         link_id=self.links_ids[i],
                         frame=self.frame,
@@ -571,22 +571,22 @@ cdef class SwimmingHandler:
                             data_links=self.links,
                             link=link,
                         )
-                if self.show_hydrodynamics:
-                    draw_hydrodynamics(
+                if self.show_xfrc:
+                    draw_xfrc(
                         iteration=iteration,
                         model=self.model,
                         link_id=self.links_ids[i],
-                        data_hydrodynamics=self.hydro,
-                        hydro_index=self.hydro_indices[i],
-                        hydrodynamics_plot=self.animat.hydrodynamics_plot,
+                        data_xfrc=self.xfrc,
+                        xfrc_index=self.xfrc_indices[i],
+                        xfrc_plot=self.animat.xfrc_plot,
                         new_active=apply_force,
                         meters=self.meters,
-                        scale=self.hydrodynamics_scale,
+                        scale=self.xfrc_scale,
                     )
 
-    cpdef set_hydrodynamics_scale(self, double value):
-        """Set hydrodynamics scale"""
-        self.hydrodynamics_scale = value*self.meters
+    cpdef set_xfrc_scale(self, double value):
+        """Set xfrc scale"""
+        self.xfrc_scale = value*self.meters
 
     cpdef set_frame(self, int frame):
         """Set frame"""
