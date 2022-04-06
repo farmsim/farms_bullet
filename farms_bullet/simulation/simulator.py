@@ -4,7 +4,7 @@ import time
 import numpy as np
 from nptyping import NDArray
 import pybullet
-import farms_pylog as pylog
+from farms_core import pylog
 from ..utils.output import redirect_output
 
 

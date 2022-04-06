@@ -8,7 +8,7 @@ import matplotlib.animation as manimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import pybullet
-import farms_pylog as pylog
+from farms_core import pylog
 
 
 class Camera:

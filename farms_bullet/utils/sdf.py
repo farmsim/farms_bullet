@@ -10,7 +10,7 @@ from imageio import imread
 from scipy.spatial.transform import Rotation
 from scipy.ndimage.filters import gaussian_filter
 
-import farms_pylog as pylog
+from farms_core import pylog
 from farms_core.model.options import LinkOptions
 from farms_core.units import SimulationUnitScaling
 from farms_core.io.sdf import (

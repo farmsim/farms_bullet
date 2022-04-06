@@ -7,7 +7,7 @@ import numpy as np
 from nptyping import NDArray
 import pybullet
 
-import farms_pylog as pylog
+from farms_core import pylog
 from farms_core.model.options import SpawnLoader
 from ..utils.sdf import load_sdf, load_sdf_pybullet
 from ..utils.output import redirect_output

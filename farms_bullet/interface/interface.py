@@ -1,7 +1,7 @@
 """Interface"""
 
 import pybullet
-import farms_pylog as pylog
+from farms_core import pylog
 from farms_core.simulation.options import SimulationOptions
 from .camera import UserCamera, CameraRecord
 
