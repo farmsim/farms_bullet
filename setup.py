@@ -25,6 +25,11 @@ setup(
     description='FARMS package for running simulation with the Bullet engine',
     keywords='farms simulation bullet',
     packages=find_packages(),
+    package_dir={'farms_bullet': 'farms_bullet'},
+    package_data={'farms_bullet': [
+        f'{folder}/*.pxd'
+        for folder in ['sensors', 'swimming']
+    ]},
     include_package_data=True,
     include_dirs=[np.get_include()],
     ext_modules=cythonize(
