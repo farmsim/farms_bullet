@@ -4,11 +4,11 @@ import os
 from typing import List, Dict
 
 import numpy as np
-from nptyping import NDArray
 import pybullet
 
 from farms_core import pylog
 from farms_core.model.options import SpawnLoader
+from farms_core.array.types import NDARRAY_3, NDARRAY_4
 from ..utils.sdf import load_sdf, load_sdf_pybullet
 from ..utils.output import redirect_output
 
@@ -111,8 +111,8 @@ class GroundModel(SimulationModel):
 
     def __init__(
             self,
-            position: NDArray[(3,), float] = None,
-            orientation: NDArray[(4,), float] = None,
+            position: NDARRAY_3 = None,
+            orientation: NDARRAY_4 = None,
     ):
         super().__init__()
         self.position = position

@@ -2,9 +2,9 @@
 
 import time
 import numpy as np
-from nptyping import NDArray
 import pybullet
 from farms_core import pylog
+from farms_core.array.types import NDARRAY_3
 from ..utils.output import redirect_output
 
 
@@ -38,7 +38,7 @@ def init_engine(headless: bool = False, opengl2: bool = False):
 
 def real_time_handing(
         timestep: float,
-        tic_rt: NDArray[(3,), float],
+        tic_rt: NDARRAY_3,
         rtl: float = 1.0,
         verbose: bool = False,
         **kwargs,
